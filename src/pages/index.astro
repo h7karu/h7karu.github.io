@@ -1,0 +1,296 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { NAV, SITE } from '../site';
+---
+
+<BaseLayout personSchema>
+	<section class="hero" aria-labelledby="hero-title">
+		<div class="grid-bg" aria-hidden="true"></div>
+
+		<div class="container">
+			<p class="welcome reveal">
+				<span class="pulse" aria-hidden="true"></span>
+				Welcome to my page!
+			</p>
+
+			<h1 id="hero-title" class="name reveal" style="--reveal-delay: 60ms">
+				I'm {SITE.familyName} <em>{SITE.givenName}</em>
+			</h1>
+
+			<div class="intro reveal" style="--reveal-delay: 120ms">
+				<p>
+					I'm currently in my final year at the National University of Singapore, doing a double
+					major in Mathematics and Computer Science. I love mathematics, and I'm interested in
+					data science, machine learning and AI.
+				</p>
+				<p>
+					I also enjoy a variety of sports and games, which you can check out on my{' '}
+					<a href="/hobbies/">hobbies page</a>.
+				</p>
+			</div>
+
+			<div class="actions reveal" style="--reveal-delay: 180ms">
+				<div class="cta">
+					<a class="btn btn-primary" href="/about/">More about me <Icon name="arrow-right" /></a>
+					<a class="btn btn-secondary" href="/contact/">Get in touch</a>
+				</div>
+				<ul class="socials">
+					<li>
+						<a class="icon-btn" href={SITE.github} target="_blank" rel="me noopener">
+							<Icon name="github" label="GitHub" />
+						</a>
+					</li>
+					<li>
+						<a class="icon-btn" href={SITE.linkedin} target="_blank" rel="me noopener">
+							<Icon name="linkedin" label="LinkedIn" />
+						</a>
+					</li>
+					<li>
+						<a class="icon-btn" href={`mailto:${SITE.email}`}>
+							<Icon name="mail" label="Email" />
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</section>
+
+	<section class="container explore" aria-labelledby="explore-title">
+		<h2 id="explore-title" class="kicker reveal">Explore</h2>
+		<ul class="pages">
+			{
+				NAV.map((page, i) => (
+					<li class="reveal" style={`--reveal-delay: ${(i % 3) * 70}ms`}>
+						<a class="page-card card" href={page.href}>
+							<span class="page-icon">
+								<Icon name={page.icon} />
+							</span>
+							<span class="page-name">
+								{page.label}
+								<Icon name="arrow-right" class="go" />
+							</span>
+							<span class="page-blurb">{page.blurb}</span>
+						</a>
+					</li>
+				))
+			}
+		</ul>
+	</section>
+</BaseLayout>
+
+<style>
+	.hero {
+		position: relative;
+		padding-block: clamp(3.5rem, 10vw, 7rem) clamp(2.5rem, 6vw, 4rem);
+	}
+
+	/* Faint graph paper, fading out towards the edges. */
+	.grid-bg {
+		position: absolute;
+		inset: calc(-1 * var(--header-h)) 0 0;
+		z-index: -1;
+		background-image:
+			linear-gradient(rgb(36 89 224 / 0.07) 1px, transparent 1px),
+			linear-gradient(90deg, rgb(36 89 224 / 0.07) 1px, transparent 1px);
+		background-size: 32px 32px;
+		mask-image: radial-gradient(ellipse 75% 70% at 35% 35%, #000 20%, transparent 75%);
+		-webkit-mask-image: radial-gradient(ellipse 75% 70% at 35% 35%, #000 20%, transparent 75%);
+		pointer-events: none;
+	}
+
+	.welcome {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 0.4rem 0.95rem 0.4rem 0.8rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		background: rgb(255 255 255 / 0.75);
+		box-shadow: var(--shadow-sm);
+		color: var(--muted);
+		font-size: var(--step--1);
+	}
+
+	.pulse {
+		position: relative;
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+		background: var(--cyan);
+	}
+
+	.pulse::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+		background: var(--cyan);
+		animation: pulse 2.4s var(--ease) infinite;
+	}
+
+	@keyframes pulse {
+		0% {
+			transform: scale(1);
+			opacity: 0.6;
+		}
+		80%,
+		100% {
+			transform: scale(3);
+			opacity: 0;
+		}
+	}
+
+	.name {
+		margin-block: 1.5rem 1.6rem;
+		font-family: var(--font-display);
+		font-size: var(--step-4);
+		font-weight: 400;
+		line-height: 0.98;
+		letter-spacing: -0.025em;
+	}
+
+	.name em {
+		background: var(--gradient);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		padding-inline-end: 0.08em;
+	}
+
+	.intro {
+		display: grid;
+		gap: 1rem;
+		max-width: 40rem;
+		color: var(--muted);
+		font-size: clamp(1.08rem, 1rem + 0.4vw, 1.25rem);
+		line-height: 1.65;
+	}
+
+	.intro a {
+		color: var(--accent);
+	}
+
+	.actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 1rem 1.25rem;
+		margin-block-start: 2.25rem;
+	}
+
+	.cta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.65rem;
+	}
+
+	.socials {
+		display: flex;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0 0 0 1.25rem;
+		border-inline-start: 1px solid var(--line-strong);
+		list-style: none;
+	}
+
+	/* ── Explore ── */
+
+	.explore {
+		padding-block-end: clamp(4rem, 9vw, 6.5rem);
+	}
+
+	.pages {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1rem;
+		margin: 1.25rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.page-card {
+		display: grid;
+		align-content: start;
+		gap: 0.4rem;
+		height: 100%;
+		padding: 1.35rem 1.4rem 1.45rem;
+		text-decoration: none;
+		transition:
+			border-color 0.25s ease,
+			box-shadow 0.25s ease,
+			transform 0.3s var(--ease);
+	}
+
+	.page-card:hover {
+		border-color: var(--accent-line);
+		box-shadow: var(--shadow);
+		color: inherit;
+		transform: translateY(-3px);
+	}
+
+	.page-icon {
+		display: grid;
+		place-items: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		margin-block-end: 0.5rem;
+		border-radius: 12px;
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+
+	.page-icon :global(.icon) {
+		width: 1.25rem;
+		height: 1.25rem;
+	}
+
+	.page-name {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		color: var(--ink);
+		font-size: var(--step-1);
+		font-weight: 600;
+		letter-spacing: -0.01em;
+	}
+
+	.page-name :global(.go) {
+		width: 1.1rem;
+		height: 1.1rem;
+		color: var(--muted);
+		transition:
+			transform 0.3s var(--ease),
+			color 0.2s ease;
+	}
+
+	.page-card:hover .page-name :global(.go) {
+		color: var(--accent);
+		transform: translateX(3px);
+	}
+
+	.page-blurb {
+		color: var(--muted);
+		font-size: var(--step--1);
+		line-height: 1.55;
+	}
+
+	@media (max-width: 60rem) {
+		.pages {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	@media (max-width: 36rem) {
+		.pages {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		/* The icons wrap below the buttons here, so the divider has nothing to divide. */
+		.socials {
+			padding-inline-start: 0;
+			border-inline-start: 0;
+		}
+	}
+</style>

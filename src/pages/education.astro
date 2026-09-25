@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import PageNav from '../components/PageNav.astro';
+import Education from '../components/sections/Education.astro';
+---
+
+<BaseLayout title="Education" description="Mathematics and Computer Science at NUS, Temasek Junior College, and selected coursework.">
+	<PageHeader
+		kicker="Education"
+		title="Where I've"
+		accent="studied"
+		intro="Mathematics and computer science at NUS, after six years at Temasek Junior College."
+	/>
+	<div class="container">
+		<Education />
+	</div>
+	<PageNav current="/education/" />
+</BaseLayout>

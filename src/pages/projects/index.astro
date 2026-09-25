@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import PageNav from '../../components/PageNav.astro';
+import Projects from '../../components/sections/Projects.astro';
+---
+
+<BaseLayout title="Projects" description="Machine learning, trading research and a chess image classifier.">
+	<PageHeader
+		kicker="Projects"
+		title="Selected"
+		accent="projects"
+		intro="Machine learning, trading research, and one project that exists mostly because I love chess."
+	/>
+	<div class="container">
+		<Projects />
+	</div>
+	<PageNav current="/projects/" />
+</BaseLayout>

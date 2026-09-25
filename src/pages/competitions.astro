@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import PageNav from '../components/PageNav.astro';
+import Competitions from '../components/sections/Competitions.astro';
+---
+
+<BaseLayout title="Competitions" description="Trading competitions, programs and mathematical olympiads.">
+	<PageHeader
+		kicker="Competitions"
+		title="Competitions &"
+		accent="programs"
+		intro="Where I test ideas against other people's — mostly in markets and mathematics."
+	/>
+	<div class="container">
+		<Competitions />
+	</div>
+	<PageNav current="/competitions/" />
+</BaseLayout>

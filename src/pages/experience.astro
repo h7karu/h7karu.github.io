@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import PageNav from '../components/PageNav.astro';
+import Experience from '../components/sections/Experience.astro';
+---
+
+<BaseLayout title="Experience" description="Data science internships at Razer and Wego.">
+	<PageHeader
+		kicker="Experience"
+		title="Where I've"
+		accent="worked"
+		intro="Two data science internships: building ranking and recommendation models, and the experiments that measure them."
+	/>
+	<div class="container">
+		<Experience />
+	</div>
+	<PageNav current="/experience/" />
+</BaseLayout>

@@ -1,0 +1,124 @@
+---
+import { LANGUAGES, SKILLS } from '../../data/profile';
+---
+
+<div class="about">
+	<div class="bio reveal">
+		<p>
+			I'm currently in my final year studying Mathematics with Computer Science
+			(Double Major) at the National University of Singapore as
+			an NUS Merit Scholar, graduating in May 2027. Before that, I spent six years at Temasek
+			Junior College, leaving with a perfect 90 rank points, a Distinction in H3 Mathematics and
+			two Singapore Mathematical Olympiad medals.
+		</p>
+		<p>
+			I have always enjoyed mathematics. This joy comes from the logical thinking and problem solving process. Many times I have been amazed by the elegance of solutions to difficult problems. This is probably why I LOVE playing strategy games like chess, poker, floating bridge and other board games. 
+		</p>
+	</div>
+
+	<aside class="toolkit card reveal" style="--reveal-delay: 120ms" aria-labelledby="toolkit-title">
+		<h2 id="toolkit-title">Toolkit</h2>
+
+		{
+			SKILLS.map((group) => (
+				<div class="group">
+					<p class="group-name">{group.group}</p>
+					<ul class="chips">
+						{group.items.map((item) => (
+							<li class="chip">{item}</li>
+						))}
+					</ul>
+				</div>
+			))
+		}
+
+		<div class="group">
+			<p class="group-name">Spoken languages</p>
+			<ul class="langs">
+				{
+					LANGUAGES.map((lang) => (
+						<li>
+							<span>{lang.name}</span>
+							<span class="level">{lang.level}</span>
+						</li>
+					))
+				}
+			</ul>
+		</div>
+	</aside>
+</div>
+
+<style>
+	.about {
+		display: grid;
+		grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+		align-items: start;
+		gap: clamp(2.5rem, 6vw, 5rem);
+	}
+
+	.bio {
+		display: grid;
+		gap: 1.1rem;
+		max-width: 38rem;
+		color: var(--text);
+		font-size: 1.05rem;
+		line-height: 1.75;
+	}
+
+	.toolkit {
+		display: grid;
+		gap: 1.35rem;
+		padding: clamp(1.4rem, 3vw, 1.9rem);
+	}
+
+	.toolkit h2 {
+		font-size: var(--step-1);
+	}
+
+	.group {
+		display: grid;
+		gap: 0.6rem;
+	}
+
+	.group + .group {
+		padding-block-start: 1.25rem;
+		border-top: 1px dashed var(--line);
+	}
+
+	.group-name {
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: var(--step--2);
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.langs {
+		display: grid;
+		gap: 0.45rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: var(--step--1);
+	}
+
+	.langs li {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1rem;
+		color: var(--ink);
+		font-weight: 500;
+	}
+
+	.level {
+		color: var(--muted);
+		font-weight: 400;
+	}
+
+	@media (max-width: 56rem) {
+		.about {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+</style>

@@ -1,0 +1,260 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Icon from './Icon.astro';
+import ProjectArt from './ProjectArt.astro';
+
+interface Props {
+	project: CollectionEntry<'projects'>;
+	/** Put the illustration on the right instead of the left. */
+	flip?: boolean;
+	style?: string;
+}
+
+const { project, flip = false, style } = Astro.props;
+const { title, summary, year, context, team, metrics, tags, repo, art } = project.data;
+const href = `/projects/${project.id}/`;
+---
+
+<article class:list={['project card reveal', { flip }]} style={style}>
+	<a class="art" href={href} tabindex="-1" aria-hidden="true">
+		<ProjectArt kind={art} />
+	</a>
+
+	<div class="body">
+		<p class="meta">
+			<span class="context">{context}</span>
+			<span aria-hidden="true">·</span>
+			<span>{year}</span>
+			{
+				team && (
+					<>
+						<span aria-hidden="true">·</span>
+						<span>{team}</span>
+					</>
+				)
+			}
+		</p>
+
+		<h2><a href={href}>{title}</a></h2>
+		<p class="summary">{summary}</p>
+
+		{
+			metrics.length > 0 && (
+				<dl class="metrics">
+					{metrics.map((metric) => (
+						<div>
+							<dt>{metric.label}</dt>
+							<dd>{metric.value}</dd>
+						</div>
+					))}
+				</dl>
+			)
+		}
+
+		<ul class="chips">
+			{tags.map((tag) => <li class="chip">{tag}</li>)}
+		</ul>
+
+		<div class="links">
+			<a class="btn btn-secondary btn-sm" href={href}>
+				Read the write-up <Icon name="arrow-right" />
+			</a>
+			{
+				repo && (
+					<a class="code-link" href={repo} target="_blank" rel="noopener">
+						<Icon name="github" /> Code <Icon name="arrow-up-right" class="ext" />
+					</a>
+				)
+			}
+		</div>
+	</div>
+</article>
+
+<style>
+	.project {
+		display: grid;
+		grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+		overflow: hidden;
+		transition:
+			border-color 0.3s ease,
+			box-shadow 0.3s ease,
+			transform 0.4s var(--ease);
+	}
+
+	.project:hover {
+		border-color: var(--accent-line);
+		box-shadow: var(--shadow-lg);
+	}
+
+	.art {
+		position: relative;
+		display: grid;
+		place-items: center;
+		padding: clamp(1.25rem, 3vw, 2.25rem);
+		border-inline-end: 1px solid var(--line);
+		background: linear-gradient(150deg, #eef4ff 0%, #f3f7fd 50%, #e5f6fb 100%);
+		overflow: hidden;
+	}
+
+	.flip .art {
+		order: 2;
+		border-inline-end: 0;
+		border-inline-start: 1px solid var(--line);
+	}
+
+	/* Graph-paper texture behind each illustration. */
+	.art::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background-image:
+			linear-gradient(rgb(36 89 224 / 0.06) 1px, transparent 1px),
+			linear-gradient(90deg, rgb(36 89 224 / 0.06) 1px, transparent 1px);
+		background-size: 22px 22px;
+		mask-image: radial-gradient(circle at 50% 50%, #000 35%, transparent 80%);
+		-webkit-mask-image: radial-gradient(circle at 50% 50%, #000 35%, transparent 80%);
+	}
+
+	.art :global(.art-svg) {
+		position: relative;
+		max-width: 26rem;
+		transition: transform 0.6s var(--ease);
+	}
+
+	.project:hover .art :global(.art-svg) {
+		transform: scale(1.03);
+	}
+
+	.body {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		padding: clamp(1.4rem, 3.5vw, 2.4rem);
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.2rem 0.5rem;
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: var(--step--2);
+		letter-spacing: 0.02em;
+	}
+
+	.context {
+		color: var(--accent);
+		font-weight: 500;
+	}
+
+	h2 {
+		font-family: var(--font-display);
+		font-size: var(--step-2);
+		font-weight: 400;
+		letter-spacing: -0.01em;
+	}
+
+	h2 a {
+		text-decoration: none;
+	}
+
+	.summary {
+		color: var(--muted);
+	}
+
+	.metrics {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 0.75rem;
+		margin: 0.25rem 0;
+		padding: 1rem 0;
+		border-block: 1px solid var(--line);
+	}
+
+	.metrics div {
+		display: flex;
+		flex-direction: column-reverse;
+		justify-content: flex-end;
+		gap: 0.25rem;
+	}
+
+	.metrics dd {
+		margin: 0;
+		color: var(--ink);
+		font-family: var(--font-mono);
+		font-size: clamp(1.15rem, 1rem + 0.6vw, 1.45rem);
+		font-weight: 500;
+		letter-spacing: -0.03em;
+		line-height: 1.1;
+		white-space: nowrap;
+	}
+
+	.metrics dt {
+		color: var(--muted);
+		font-size: var(--step--2);
+		line-height: 1.4;
+	}
+
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.75rem 1.25rem;
+		margin-block-start: auto;
+		padding-block-start: 0.5rem;
+	}
+
+	.code-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		color: var(--muted);
+		font-size: var(--step--1);
+		font-weight: 500;
+		text-decoration: none;
+	}
+
+	.code-link:hover {
+		color: var(--accent);
+	}
+
+	.code-link :global(.ext) {
+		width: 0.85em;
+		height: 0.85em;
+	}
+
+	@media (max-width: 56rem) {
+		.project {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.art,
+		.flip .art {
+			order: 0;
+			border-inline: 0;
+			border-bottom: 1px solid var(--line);
+		}
+
+		.art :global(.art-svg) {
+			max-width: 22rem;
+		}
+	}
+
+	@media (max-width: 30rem) {
+		.metrics {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 0.85rem;
+		}
+
+		.metrics div {
+			flex-direction: row-reverse;
+			align-items: baseline;
+			justify-content: flex-end;
+			gap: 0.75rem;
+		}
+
+		.metrics dd {
+			min-width: 4.5rem;
+		}
+	}
+</style>

@@ -1,0 +1,122 @@
+---
+import { Font } from 'astro:assets';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../site';
+import '../styles/global.css';
+
+interface Props {
+	title?: string;
+	description?: string;
+	/** Adds schema.org data describing the site owner. Homepage only. */
+	personSchema?: boolean;
+}
+
+const { title, description = SITE.description, personSchema = false } = Astro.props;
+const pageTitle = title ? `${title} — ${SITE.name}` : `${SITE.name} — ${SITE.tagline}`;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL('/og.jpg', Astro.site);
+
+const person = {
+	'@context': 'https://schema.org',
+	'@type': 'Person',
+	name: SITE.name,
+	givenName: SITE.givenName,
+	familyName: SITE.familyName,
+	url: Astro.site?.href,
+	email: `mailto:${SITE.email}`,
+	address: { '@type': 'PostalAddress', addressCountry: 'SG' },
+	alumniOf: [
+		{ '@type': 'CollegeOrUniversity', name: 'National University of Singapore' },
+		{ '@type': 'EducationalOrganization', name: 'Temasek Junior College' },
+	],
+	knowsLanguage: ['English', 'Chinese', 'Japanese'],
+	sameAs: [SITE.github, SITE.linkedin],
+};
+---
+
+<!doctype html>
+<html lang="en" class="no-js">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>{pageTitle}</title>
+		<meta name="description" content={description} />
+		<meta name="author" content={SITE.name} />
+		<link rel="canonical" href={canonical} />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<meta name="theme-color" content="#f5f8fc" />
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={SITE.name} />
+		<meta property="og:title" content={pageTitle} />
+		<meta property="og:description" content={description} />
+		<meta property="og:url" content={canonical} />
+		<meta property="og:image" content={ogImage} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:alt" content={`${SITE.name} — ${SITE.tagline}`} />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:image" content={ogImage} />
+
+		<Font cssVariable="--font-sans" preload />
+		<Font cssVariable="--font-serif" preload />
+		<Font cssVariable="--font-code" />
+
+		<script is:inline>
+			document.documentElement.classList.remove('no-js');
+		</script>
+
+		{personSchema && <script type="application/ld+json" set:html={JSON.stringify(person)} />}
+	</head>
+	<body>
+		<a class="skip" href="#main">Skip to content</a>
+		<Header />
+		<main id="main">
+			<slot />
+		</main>
+		<Footer />
+
+		<script>
+			// Scroll reveal: fade sections in as they enter the viewport, once.
+			const items = document.querySelectorAll<HTMLElement>('.reveal:not(.is-visible)');
+			const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+			if (reduced || !('IntersectionObserver' in window)) {
+				items.forEach((el) => el.classList.add('is-visible'));
+			} else {
+				const io = new IntersectionObserver(
+					(entries) => {
+						for (const entry of entries) {
+							if (!entry.isIntersecting) continue;
+							entry.target.classList.add('is-visible');
+							io.unobserve(entry.target);
+						}
+					},
+					{ rootMargin: '0px 0px -6% 0px', threshold: 0.06 },
+				);
+				items.forEach((el) => io.observe(el));
+			}
+		</script>
+
+		<style>
+			.skip {
+				position: absolute;
+				left: -9999px;
+				top: 0.75rem;
+				z-index: 100;
+				padding: 0.6rem 1rem;
+				border-radius: 999px;
+				background: var(--ink);
+				color: #fff;
+				text-decoration: none;
+			}
+
+			.skip:focus {
+				left: 0.75rem;
+			}
+		</style>
+	</body>
+</html>

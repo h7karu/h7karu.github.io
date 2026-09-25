@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import PageNav from '../components/PageNav.astro';
+import About from '../components/sections/About.astro';
+---
+
+<BaseLayout title="About" description="About Kawaguchi Hikaru — background, interests and the tools I work with.">
+	<PageHeader
+		kicker="About"
+		title="From olympiad problems to"
+		accent="real-world models"
+		after="."
+	/>
+	<div class="container">
+		<About />
+	</div>
+	<PageNav current="/about/" />
+</BaseLayout>

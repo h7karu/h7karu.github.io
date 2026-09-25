@@ -1,0 +1,17 @@
+---
+import { getCollection } from 'astro:content';
+import ProjectCard from '../ProjectCard.astro';
+
+const projects = (await getCollection('projects')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<div class="list">
+	{projects.map((project, i) => <ProjectCard project={project} flip={i % 2 === 1} />)}
+</div>
+
+<style>
+	.list {
+		display: grid;
+		gap: clamp(1.25rem, 3vw, 1.75rem);
+	}
+</style>

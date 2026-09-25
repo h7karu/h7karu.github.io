@@ -1,0 +1,469 @@
+---
+/**
+ * Decorative illustrations for the project cards, drawn at build time.
+ * They depict each project's idea, not its data.
+ */
+interface Props {
+	kind: 'spectrum' | 'spread' | 'board';
+}
+
+const { kind } = Astro.props;
+
+/** Seeded PRNG (mulberry32), so every build draws the same picture. */
+function prng(seed: number) {
+	let a = seed;
+	return () => {
+		a = (a + 0x6d2b79f5) | 0;
+		let t = Math.imul(a ^ (a >>> 15), 1 | a);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
+}
+
+const r1 = (n: number) => n.toFixed(1);
+const path = (pts: [number, number][]) =>
+	pts.map(([x, y], i) => `${i ? 'L' : 'M'}${r1(x)} ${r1(y)}`).join('');
+
+/* ── Pairs trading: two co-moving prices, their spread and its z-score ── */
+
+const N = 90;
+const X0 = 40;
+const X1 = 372;
+const xAt = (i: number) => X0 + (i / (N - 1)) * (X1 - X0);
+
+const rand = prng(11);
+const common: number[] = [];
+const spread: number[] = [];
+let level = 0;
+let gap = 0;
+for (let i = 0; i < N; i++) {
+	level += (rand() - 0.46) * 1.6;
+	gap = gap * 0.82 + (rand() - 0.5) * 2.6;
+	common.push(level);
+	spread.push(gap);
+}
+
+const pep = common.map((v, i) => v + spread[i] * 0.55 + 2.2);
+const ko = common.map((v, i) => v - spread[i] * 0.55);
+const lo = Math.min(...pep, ...ko);
+const hi = Math.max(...pep, ...ko);
+const priceY = (v: number) => 158 - ((v - lo) / (hi - lo)) * 112;
+
+const pepPts = pep.map((v, i) => [xAt(i), priceY(v)] as [number, number]);
+const koPts = ko.map((v, i) => [xAt(i), priceY(v)] as [number, number]);
+const bandPath = `${path(pepPts)}${koPts
+	.slice()
+	.reverse()
+	.map(([x, y]) => `L${r1(x)} ${r1(y)}`)
+	.join('')}Z`;
+
+const mean = spread.reduce((sum, v) => sum + v, 0) / N;
+const sd = Math.sqrt(spread.reduce((sum, v) => sum + (v - mean) ** 2, 0) / N);
+const zScores = spread.map((v) => (v - mean) / sd);
+const Z_MID = 238;
+const zY = (z: number) => Z_MID - Math.max(-2.5, Math.min(2.5, z)) * 13;
+const THRESHOLD = 1.4;
+const zPath = path(zScores.map((z, i) => [xAt(i), zY(z)]));
+const signals = zScores.flatMap((z, i) =>
+	i > 0 && Math.abs(z) >= THRESHOLD && Math.abs(zScores[i - 1]) < THRESHOLD
+		? [{ x: xAt(i), y: zY(z), short: z > 0 }]
+		: [],
+);
+
+/* ── AIGC detector: pixels in, Fourier-phase spectrum out ── */
+
+const CELL = 18;
+const STEP = 21;
+const MOSAIC_X = 34;
+const MOSAIC_Y = 72;
+const tampered = (col: number, row: number) => col >= 4 && col <= 6 && row >= 2 && row <= 3;
+const pixelRand = prng(5);
+const pixels = Array.from({ length: 64 }, (_, k) => {
+	const col = k % 8;
+	const row = Math.floor(k / 8);
+	const v =
+		0.5 +
+		0.3 * Math.sin(col * 0.75 + 0.4) * Math.cos(row * 0.6 - 0.3) +
+		0.2 * (pixelRand() - 0.5);
+	return {
+		x: MOSAIC_X + col * STEP,
+		y: MOSAIC_Y + row * STEP,
+		opacity: r1(0.14 + Math.max(0, Math.min(1, v)) * 0.66),
+		edited: tampered(col, row),
+	};
+});
+
+const SPEC_X = 344;
+const SPEC_Y = 154;
+const SPEC_R = 78;
+const specDots = [20, 34, 48, 62].flatMap((radius) =>
+	Array.from({ length: 12 }, (_, k) => {
+		const angle = (k * Math.PI) / 6 + radius / 40;
+		return { x: SPEC_X + radius * Math.cos(angle), y: SPEC_Y + radius * Math.sin(angle) };
+	}),
+);
+// Upsampling leaves periodic peaks on a grid in the spectrum — the tell.
+const peaks = [-1, 0, 1]
+	.flatMap((dx) => [-1, 0, 1].map((dy) => [dx, dy] as const))
+	.filter(([dx, dy]) => dx !== 0 || dy !== 0)
+	.map(([dx, dy]) => ({ x: SPEC_X + dx * 38, y: SPEC_Y + dy * 38 }));
+
+/* ── Chess classifier: board → feature maps → softmax ── */
+
+const SQ = 20;
+const BOARD_X = 30;
+const BOARD_Y = 72;
+const squares = Array.from({ length: 64 }, (_, k) => {
+	const col = k % 8;
+	const row = Math.floor(k / 8);
+	const d2 = (col - 4.6) ** 2 + (row - 2.8) ** 2;
+	return {
+		x: BOARD_X + col * SQ,
+		y: BOARD_Y + row * SQ,
+		dark: (col + row) % 2 === 1,
+		heat: r1(0.62 * Math.exp(-d2 / 5)),
+	};
+});
+const maps = [0, 1, 2, 3].map((k) => {
+	const size = 68 - k * 12;
+	return { x: 214 + k * 17, y: 152 - size / 2, size };
+});
+// A 4×4 grid of activations on the front feature map.
+const ACT_CELL = 11.5;
+const ACT_STEP = 14;
+const actPad = (maps[0].size - (3 * ACT_STEP + ACT_CELL)) / 2;
+const activations = Array.from({ length: 16 }, (_, k) => {
+	const col = k % 4;
+	const row = Math.floor(k / 4);
+	const v = Math.exp(-((col - 2.2) ** 2 + (row - 1.3) ** 2) / 3.2);
+	return {
+		x: maps[0].x + actPad + col * ACT_STEP,
+		y: maps[0].y + actPad + row * ACT_STEP,
+		opacity: r1(0.1 + 0.72 * v),
+	};
+});
+const outputs = [
+	{ name: 'Carlsen', p: 0.14 },
+	{ name: 'Nakamura', p: 0.79 },
+	{ name: 'Abdusattorov', p: 0.07 },
+];
+---
+
+<svg class="art-svg" viewBox="0 0 440 300" aria-hidden="true" focusable="false">
+	{
+		kind === 'spread' && (
+			<>
+				<defs>
+					<linearGradient id="art-spread-band" x1="0" y1="0" x2="0" y2="1">
+						<stop offset="0" stop-color="#2459e0" stop-opacity="0.18" />
+						<stop offset="1" stop-color="#0bb3d1" stop-opacity="0.08" />
+					</linearGradient>
+				</defs>
+				<rect class="panel" x="22" y="26" width="396" height="150" rx="16" />
+				<rect class="panel" x="22" y="192" width="396" height="86" rx="16" />
+
+				<path d={bandPath} fill="url(#art-spread-band)" />
+				<path class="line line-ko" d={path(koPts)} />
+				<path class="line line-pep" d={path(pepPts)} />
+				<text class="label label-pep" x={X1 + 8} y={r1(pepPts[N - 1][1] + 3)}>
+					PEP
+				</text>
+				<text class="label label-ko" x={X1 + 8} y={r1(koPts[N - 1][1] + 3)}>
+					KO
+				</text>
+
+				<line class="threshold" x1={X0} x2={X1} y1={zY(THRESHOLD)} y2={zY(THRESHOLD)} />
+				<line class="threshold" x1={X0} x2={X1} y1={zY(-THRESHOLD)} y2={zY(-THRESHOLD)} />
+				<line class="zero" x1={X0} x2={X1} y1={Z_MID} y2={Z_MID} />
+				<path class="line line-z" d={zPath} />
+				{signals.map((s) => (
+					<circle class:list={['signal', s.short ? 'signal-short' : 'signal-long']} cx={r1(s.x)} cy={r1(s.y)} r="4" />
+				))}
+				<text class="label" x={X1 + 8} y={Z_MID + 3}>
+					z
+				</text>
+			</>
+		)
+	}
+
+	{
+		kind === 'spectrum' && (
+			<>
+				<defs>
+					<radialGradient id="art-spectrum-glow">
+						<stop offset="0" stop-color="#2459e0" stop-opacity="0.55" />
+						<stop offset="1" stop-color="#2459e0" stop-opacity="0" />
+					</radialGradient>
+				</defs>
+				<rect class="panel" x="20" y="58" width="192" height="192" rx="18" />
+				{pixels.map((px) => (
+					<rect
+						class:list={['pixel', { 'pixel-edited': px.edited }]}
+						x={px.x}
+						y={px.y}
+						width={CELL}
+						height={CELL}
+						rx="3"
+						fill-opacity={px.opacity}
+					/>
+				))}
+				<rect class="edit-box" x={MOSAIC_X + 4 * STEP - 5} y={MOSAIC_Y + 2 * STEP - 5} width={3 * STEP + 7} height={2 * STEP + 7} rx="7" />
+
+				<path class="arrow" d="M222 154h34m-7-6 7 6-7 6" />
+				<text class="label" x="239" y="140" text-anchor="middle">
+					FFT
+				</text>
+
+				<circle class="panel" cx={SPEC_X} cy={SPEC_Y} r={SPEC_R} />
+				<line class="axis" x1={SPEC_X - SPEC_R + 8} x2={SPEC_X + SPEC_R - 8} y1={SPEC_Y} y2={SPEC_Y} />
+				<line class="axis" x1={SPEC_X} x2={SPEC_X} y1={SPEC_Y - SPEC_R + 8} y2={SPEC_Y + SPEC_R - 8} />
+				{[16, 32, 48, 64].map((radius, i) => (
+					<circle class="ring" cx={SPEC_X} cy={SPEC_Y} r={radius} stroke-opacity={r1(0.9 - i * 0.18)} />
+				))}
+				{specDots.map((d) => (
+					<circle class="spec-dot" cx={r1(d.x)} cy={r1(d.y)} r="1.3" />
+				))}
+				<circle cx={SPEC_X} cy={SPEC_Y} r="26" fill="url(#art-spectrum-glow)" />
+				{peaks.map((p) => (
+					<>
+						<circle class="peak-halo" cx={p.x} cy={p.y} r="7" />
+						<circle class="peak" cx={p.x} cy={p.y} r="2.8" />
+					</>
+				))}
+
+				<text class="label" x="116" y="272" text-anchor="middle">
+					RGB
+				</text>
+				<text class="label" x={SPEC_X} y="272" text-anchor="middle">
+					Fourier phase
+				</text>
+			</>
+		)
+	}
+
+	{
+		kind === 'board' && (
+			<>
+				<defs>
+					<clipPath id="art-board-clip">
+						<rect x={BOARD_X} y={BOARD_Y} width={SQ * 8} height={SQ * 8} rx="10" />
+					</clipPath>
+					<linearGradient id="art-board-bar" x1="0" x2="1">
+						<stop offset="0" stop-color="#2459e0" />
+						<stop offset="1" stop-color="#0bb3d1" />
+					</linearGradient>
+				</defs>
+				<rect class="board-shadow" x={BOARD_X} y={BOARD_Y} width={SQ * 8} height={SQ * 8} rx="10" />
+				<g clip-path="url(#art-board-clip)">
+					{squares.map((sq) => (
+						<rect class:list={['square', { 'square-dark': sq.dark }]} x={sq.x} y={sq.y} width={SQ} height={SQ} />
+					))}
+					{squares.map((sq) => (
+						<rect class="heat" x={sq.x} y={sq.y} width={SQ} height={SQ} fill-opacity={sq.heat} />
+					))}
+				</g>
+				<text class="label" x={BOARD_X + SQ * 4} y="258" text-anchor="middle">
+					input
+				</text>
+
+				<path class="arrow" d="M196 152h12m-5-5 5 5-5 5" />
+				{maps
+					.slice()
+					.reverse()
+					.map((m) => (
+						<rect class="map" x={m.x} y={m.y} width={m.size} height={m.size} rx="7" />
+					))}
+				{activations.map((a) => (
+					<rect class="activation" x={r1(a.x)} y={r1(a.y)} width={ACT_CELL} height={ACT_CELL} rx="2.5" fill-opacity={a.opacity} />
+				))}
+				<text class="label" x="250" y="258" text-anchor="middle">
+					conv
+				</text>
+
+				<path class="arrow" d="M300 152h12m-5-5 5 5-5 5" />
+				{outputs.map((o, i) => (
+					<>
+						<text class="label label-name" x="322" y={120 + i * 34}>
+							{o.name}
+						</text>
+						<rect class="bar-track" x="322" y={126 + i * 34} width="92" height="8" rx="4" />
+						<rect
+							class:list={['bar', { 'bar-top': o.p === Math.max(...outputs.map((x) => x.p)) }]}
+							x="322"
+							y={126 + i * 34}
+							width={r1(Math.max(8, 92 * o.p))}
+							height="8"
+							rx="4"
+						/>
+					</>
+				))}
+				<text class="label" x="368" y="258" text-anchor="middle">
+					softmax
+				</text>
+			</>
+		)
+	}
+</svg>
+
+<style>
+	.art-svg {
+		display: block;
+		width: 100%;
+		height: auto;
+		overflow: visible;
+	}
+
+	.panel {
+		fill: rgb(255 255 255 / 0.72);
+		stroke: #d6e2f5;
+		stroke-width: 1;
+	}
+
+	.label {
+		fill: #56667e;
+		font-family: var(--font-mono);
+		font-size: 10.5px;
+		letter-spacing: 0.04em;
+	}
+
+	.line {
+		fill: none;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.line-pep {
+		stroke: #2459e0;
+	}
+
+	.line-ko {
+		stroke: #0bb3d1;
+	}
+
+	.label-pep {
+		fill: #2459e0;
+	}
+
+	.label-ko {
+		fill: #0b9cc0;
+	}
+
+	.line-z {
+		stroke: #0b1628;
+		stroke-opacity: 0.55;
+		stroke-width: 1.5;
+	}
+
+	.threshold {
+		stroke: #9fb8ee;
+		stroke-dasharray: 4 4;
+	}
+
+	.zero {
+		stroke: #d6e2f5;
+	}
+
+	.signal {
+		stroke: #fff;
+		stroke-width: 2;
+	}
+
+	.signal-short {
+		fill: #2459e0;
+	}
+
+	.signal-long {
+		fill: #0bb3d1;
+	}
+
+	.pixel {
+		fill: #2459e0;
+	}
+
+	.pixel-edited {
+		fill: #0bb3d1;
+	}
+
+	.edit-box {
+		fill: none;
+		stroke: #0b9cc0;
+		stroke-width: 1.5;
+		stroke-dasharray: 4 3;
+	}
+
+	.arrow {
+		fill: none;
+		stroke: #8aa0c2;
+		stroke-width: 1.6;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.axis {
+		stroke: #d6e2f5;
+	}
+
+	.ring {
+		fill: none;
+		stroke: #b9cdf5;
+	}
+
+	.spec-dot {
+		fill: #2459e0;
+		fill-opacity: 0.3;
+	}
+
+	.peak-halo {
+		fill: #0bb3d1;
+		fill-opacity: 0.2;
+	}
+
+	.peak {
+		fill: #0b9cc0;
+	}
+
+	.board-shadow {
+		fill: #fff;
+		filter: drop-shadow(0 10px 18px rgb(20 50 110 / 0.16));
+	}
+
+	.square {
+		fill: #fff;
+	}
+
+	.square-dark {
+		fill: #dbe6fb;
+	}
+
+	.heat {
+		fill: #0bb3d1;
+	}
+
+	.map {
+		fill: #fff;
+		stroke: #b9cdf5;
+		filter: drop-shadow(0 4px 8px rgb(20 50 110 / 0.1));
+	}
+
+	.activation {
+		fill: #2459e0;
+	}
+
+	.label-name {
+		fill: #223047;
+		font-size: 10px;
+	}
+
+	.bar-track {
+		fill: #e6edf8;
+	}
+
+	.bar {
+		fill: #9fb8ee;
+	}
+
+	.bar-top {
+		fill: url(#art-board-bar);
+	}
+</style>

@@ -1,0 +1,291 @@
+---
+import Icon from './Icon.astro';
+import { SITE, NAV } from '../site';
+
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || path.startsWith(href);
+---
+
+<header class="site-header" data-open="false">
+	<div class="container bar">
+		<a class="brand" href="/" aria-label={`${SITE.name}, home`}>
+			<span class="mark" aria-hidden="true">{SITE.initials}</span>
+			<span class="brand-name">{SITE.name}</span>
+		</a>
+
+		<nav class="nav" id="site-nav" aria-label="Primary">
+			<ul class="nav-list">
+				{
+					NAV.map((item) => (
+						<li>
+							<a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>
+								{item.label}
+							</a>
+						</li>
+					))
+				}
+			</ul>
+			<a
+				class="btn btn-primary btn-sm nav-cta"
+				href="/contact/"
+				aria-current={isActive('/contact/') ? 'page' : undefined}
+			>
+				Get in touch
+			</a>
+		</nav>
+
+		<button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+			<span class="sr-only">Open menu</span>
+			<Icon name="menu" class="i-open" />
+			<Icon name="close" class="i-close" />
+		</button>
+	</div>
+</header>
+
+<style>
+	.site-header {
+		position: sticky;
+		top: 0;
+		z-index: 50;
+		background: rgb(245 248 252 / 0.72);
+		backdrop-filter: saturate(1.5) blur(14px);
+		-webkit-backdrop-filter: saturate(1.5) blur(14px);
+		border-bottom: 1px solid transparent;
+		transition:
+			border-color 0.2s ease,
+			background-color 0.2s ease;
+	}
+
+	/* Hairline appears only once the page is scrolled. */
+	:global(body.is-scrolled) .site-header {
+		border-bottom-color: var(--line);
+		background: rgb(245 248 252 / 0.86);
+	}
+
+	.bar {
+		display: flex;
+		align-items: center;
+		gap: 1.5rem;
+		height: var(--header-h);
+	}
+
+	.brand {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.65rem;
+		margin-inline-end: auto;
+		color: var(--ink);
+		font-size: 0.95rem;
+		font-weight: 600;
+		letter-spacing: -0.01em;
+		text-decoration: none;
+	}
+
+	.brand:hover {
+		color: var(--ink);
+	}
+
+	.mark {
+		display: grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		border-radius: 9px;
+		background: var(--gradient);
+		color: #fff;
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		box-shadow:
+			0 6px 14px -6px rgb(36 89 224 / 0.65),
+			inset 0 1px 0 rgb(255 255 255 / 0.25);
+		transition: transform 0.3s var(--ease);
+	}
+
+	.brand:hover .mark {
+		transform: rotate(-6deg) scale(1.05);
+	}
+
+	.nav {
+		display: flex;
+		align-items: center;
+		gap: 1.75rem;
+	}
+
+	.nav-list {
+		display: flex;
+		gap: 1.5rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: var(--step--1);
+	}
+
+	.nav-list a {
+		position: relative;
+		display: block;
+		padding-block: 0.35rem;
+		color: var(--muted);
+		text-decoration: none;
+	}
+
+	.nav-list a::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: -0.1rem;
+		height: 2px;
+		border-radius: 2px;
+		background: var(--gradient);
+		transform: scaleX(0);
+		transform-origin: left;
+		transition: transform 0.35s var(--ease);
+	}
+
+	.nav-list a:hover,
+	.nav-list a[aria-current='page'] {
+		color: var(--ink);
+	}
+
+	.nav-list a[aria-current='page']::after {
+		transform: scaleX(1);
+	}
+
+	.menu-toggle {
+		display: none;
+		place-items: center;
+		width: 2.6rem;
+		height: 2.6rem;
+		padding: 0;
+		border: 1px solid var(--line-strong);
+		border-radius: 999px;
+		background: var(--surface);
+		color: var(--ink);
+		cursor: pointer;
+	}
+
+	.menu-toggle :global(.icon) {
+		grid-area: 1 / 1;
+		width: 1.15rem;
+		height: 1.15rem;
+	}
+
+	.menu-toggle :global(.i-close) {
+		display: none;
+	}
+
+	[data-open='true'] .menu-toggle :global(.i-open) {
+		display: none;
+	}
+
+	[data-open='true'] .menu-toggle :global(.i-close) {
+		display: block;
+	}
+
+	@media (max-width: 60rem) {
+		.menu-toggle {
+			display: grid;
+		}
+
+		.nav {
+			position: absolute;
+			top: calc(100% + 0.25rem);
+			left: var(--gutter);
+			right: var(--gutter);
+			flex-direction: column;
+			align-items: stretch;
+			gap: 0.5rem;
+			padding: 0.6rem;
+			border: 1px solid var(--line);
+			border-radius: var(--radius-lg);
+			background: var(--surface);
+			box-shadow: var(--shadow-lg);
+			opacity: 0;
+			visibility: hidden;
+			transform: translateY(-6px) scale(0.98);
+			transform-origin: top right;
+			transition:
+				opacity 0.2s ease,
+				transform 0.25s var(--ease),
+				visibility 0.2s;
+		}
+
+		[data-open='true'] .nav {
+			opacity: 1;
+			visibility: visible;
+			transform: none;
+		}
+
+		.nav-list {
+			flex-direction: column;
+			gap: 0.1rem;
+			font-size: var(--step-0);
+		}
+
+		.nav-list a {
+			padding: 0.75rem 0.9rem;
+			border-radius: 12px;
+			color: var(--ink);
+		}
+
+		.nav-list a::after {
+			display: none;
+		}
+
+		.nav-list a:hover,
+		.nav-list a[aria-current='page'] {
+			background: var(--accent-soft);
+			color: var(--accent-hover);
+		}
+
+		.nav-cta {
+			min-height: 2.9rem;
+		}
+	}
+</style>
+
+<script>
+	const header = document.querySelector<HTMLElement>('.site-header');
+	const toggle = header?.querySelector<HTMLButtonElement>('.menu-toggle');
+	const nav = header?.querySelector<HTMLElement>('#site-nav');
+
+	if (header && toggle && nav) {
+		const label = toggle.querySelector('.sr-only');
+
+		const setOpen = (open: boolean) => {
+			header.dataset.open = String(open);
+			toggle.setAttribute('aria-expanded', String(open));
+			if (label) label.textContent = open ? 'Close menu' : 'Open menu';
+		};
+
+		toggle.addEventListener('click', () => setOpen(header.dataset.open !== 'true'));
+
+		// Close after choosing a destination, on Escape, or on a click elsewhere.
+		nav.addEventListener('click', (event) => {
+			if ((event.target as HTMLElement).closest('a')) setOpen(false);
+		});
+
+		document.addEventListener('keydown', (event) => {
+			if (event.key === 'Escape' && header.dataset.open === 'true') {
+				setOpen(false);
+				toggle.focus();
+			}
+		});
+
+		document.addEventListener('click', (event) => {
+			if (header.dataset.open === 'true' && !header.contains(event.target as Node)) {
+				setOpen(false);
+			}
+		});
+
+		window.matchMedia('(min-width: 60.01rem)').addEventListener('change', (event) => {
+			if (event.matches) setOpen(false);
+		});
+	}
+
+	// Hairline under the header once the page has scrolled.
+	const onScroll = () => document.body.classList.toggle('is-scrolled', window.scrollY > 8);
+	window.addEventListener('scroll', onScroll, { passive: true });
+	onScroll();
+</script>

@@ -1,0 +1,60 @@
+---
+interface Props {
+	kicker: string;
+	/** Plain part of the heading. */
+	title: string;
+	/** Italic, accented words after the title. */
+	accent?: string;
+	/** Text after the accent, e.g. a full stop. */
+	after?: string;
+	intro?: string;
+}
+
+const { kicker, title, accent, after = '', intro } = Astro.props;
+---
+
+<header class="container page-head">
+	<p class="kicker reveal">{kicker}</p>
+	<h1 class="page-title reveal" style="--reveal-delay: 60ms">
+		{title}{accent && ' '}{accent && <em>{accent}</em>}{after}
+	</h1>
+	{
+		intro && (
+			<p class="page-intro reveal" style="--reveal-delay: 120ms">
+				{intro}
+			</p>
+		)
+	}
+</header>
+
+<style>
+	.page-head {
+		padding-block: clamp(3rem, 8vw, 5.5rem) clamp(2rem, 5vw, 3.25rem);
+	}
+
+	.page-title {
+		max-width: 22ch;
+		margin-block-start: 0.9rem;
+		font-family: var(--font-display);
+		font-size: clamp(2.6rem, 1.9rem + 3.2vw, 4.6rem);
+		font-weight: 400;
+		line-height: 1;
+		letter-spacing: -0.02em;
+	}
+
+	.page-title em {
+		background: var(--gradient);
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+		padding-inline-end: 0.06em;
+	}
+
+	.page-intro {
+		max-width: 38rem;
+		margin-block-start: 1.25rem;
+		color: var(--muted);
+		font-size: var(--step-1);
+		line-height: 1.55;
+	}
+</style>

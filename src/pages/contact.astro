@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageNav from '../components/PageNav.astro';
+import Contact from '../components/sections/Contact.astro';
+---
+
+<BaseLayout title="Contact" description="Get in touch with Kawaguchi Hikaru by email, LinkedIn or GitHub.">
+	<div class="container contact-page">
+		<Contact />
+	</div>
+	<PageNav current="/contact/" />
+</BaseLayout>
+
+<style>
+	.contact-page {
+		padding-block-start: clamp(3rem, 8vw, 5.5rem);
+	}
+</style>

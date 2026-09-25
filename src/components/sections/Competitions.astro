@@ -1,0 +1,92 @@
+---
+import Icon from '../Icon.astro';
+import { COMPETITIONS } from '../../data/profile';
+---
+
+<ol class="grid">
+	{
+		COMPETITIONS.map((item, i) => (
+			<li class="item card reveal" style={`--reveal-delay: ${i * 90}ms`}>
+				<p class="date">{item.date}</p>
+				<h2>{item.name}</h2>
+				<p class="track">{item.track}</p>
+				<p class="result">
+					<Icon name="trophy" />
+					{item.result}
+				</p>
+				<p class="desc">{item.description}</p>
+			</li>
+		))
+	}
+</ol>
+
+<style>
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1.25rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.item {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		padding: clamp(1.35rem, 3vw, 1.85rem);
+		transition:
+			transform 0.35s var(--ease),
+			box-shadow 0.3s ease,
+			border-color 0.3s ease;
+	}
+
+	.item:hover {
+		transform: translateY(-3px);
+		border-color: var(--accent-line);
+		box-shadow: var(--shadow);
+	}
+
+	.date {
+		color: var(--muted);
+		font-family: var(--font-mono);
+		font-size: var(--step--2);
+		letter-spacing: 0.04em;
+	}
+
+	h2 {
+		font-size: var(--step-1);
+	}
+
+	.track {
+		color: var(--muted);
+		font-size: var(--step--1);
+	}
+
+	.result {
+		display: inline-flex;
+		align-self: flex-start;
+		align-items: center;
+		gap: 0.45rem;
+		margin-block: 0.6rem 0.4rem;
+		padding: 0.4rem 0.8rem;
+		border: 1px solid var(--accent-line);
+		border-radius: 999px;
+		background: var(--accent-soft);
+		color: var(--accent-hover);
+		font-size: var(--step--1);
+		font-weight: 600;
+	}
+
+	.desc {
+		color: var(--text);
+		font-size: var(--step--1);
+		line-height: 1.6;
+	}
+
+	@media (max-width: 60rem) {
+		.grid {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+</style>

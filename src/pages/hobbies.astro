@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import PageNav from '../components/PageNav.astro';
+import Hobbies from '../components/sections/Hobbies.astro';
+---
+
+<BaseLayout title="Hobbies" description="Chess, speedcubing, poker, bridge, board games, sport and reading.">
+	<PageHeader
+		kicker="Hobbies"
+		title="Off the"
+		accent="clock"
+		intro="I enjoy a variety of sports and games. Here's what I get up to outside of work."
+	/>
+	<div class="container">
+		<Hobbies />
+	</div>
+	<PageNav current="/hobbies/" />
+</BaseLayout>

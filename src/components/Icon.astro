@@ -1,0 +1,33 @@
+---
+/**
+ * Inline SVG icon. Decorative by default — pass `label` when the icon carries
+ * meaning on its own (e.g. an icon-only link).
+ */
+import { FILLED_ICONS, STROKE_ICONS, type IconName } from '../lib/icons';
+
+interface Props {
+	name: IconName;
+	label?: string;
+	class?: string;
+}
+
+const { name, label, class: className } = Astro.props;
+const filled = name in FILLED_ICONS;
+const body = filled
+	? FILLED_ICONS[name as keyof typeof FILLED_ICONS]
+	: STROKE_ICONS[name as keyof typeof STROKE_ICONS];
+---
+
+<svg
+	class:list={['icon', className]}
+	viewBox="0 0 24 24"
+	fill={filled ? 'currentColor' : 'none'}
+	stroke={filled ? undefined : 'currentColor'}
+	stroke-width={filled ? undefined : 1.7}
+	stroke-linecap={filled ? undefined : 'round'}
+	stroke-linejoin={filled ? undefined : 'round'}
+	role={label ? 'img' : undefined}
+	aria-label={label}
+	aria-hidden={label ? undefined : 'true'}
+	set:html={body}
+/>
